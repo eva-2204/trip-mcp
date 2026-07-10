@@ -73,13 +73,10 @@ export default function App() {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div>
-          <h1>
-            <span className="logo-dot" aria-hidden />
-            AI Travel Agent · MCP демо
-          </h1>
-          <div className="subtitle">Kiwi MCP · Trivago MCP · Claude через OpenRouter</div>
-        </div>
+        <h1>
+          <span className="logo-dot" aria-hidden />
+          AI Travel Agent
+        </h1>
       </header>
 
       {status && !status.ready && <StatusBanner />}
