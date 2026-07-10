@@ -1,0 +1,19 @@
+{
+  "name": "trip-mcp",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Демонстрационный AI Travel Agent на Claude Code с использованием MCP",
+  "workspaces": [
+    "server",
+    "web"
+  ],
+  "scripts": {
+    "dev:server": "npm run dev --workspace server",
+    "dev:web": "npm run dev --workspace web",
+    "build:server": "npm run build --workspace server",
+    "build:web": "npm run build --workspace web",
+    "build": "npm run build:web && npm run build:server",
+    "start": "npm run start --workspace server",
+    "typecheck": "npm run typecheck --workspace server && npm run typecheck --workspace web"
+  }
+}
