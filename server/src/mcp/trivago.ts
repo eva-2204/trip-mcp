@@ -1,6 +1,6 @@
 import { config } from '../config.js';
 import { logBus } from '../logBus.js';
-import { getAnthropicClient } from '../agent/anthropicClient.js';
+import { getOpenRouterClient } from '../agent/openrouterClient.js';
 import { McpServerClient, McpToolSummary } from './client.js';
 
 export const TRIVAGO_SUGGESTIONS_TOOL = 'trivago-search-suggestions';
@@ -66,27 +66,31 @@ export function containsCyrillic(value: string): boolean {
  * Safety net: Trivago does not resolve Russian city names. The main agent is
  * instructed to always translate city names to English itself before calling
  * Trivago tools, but in case a Cyrillic value slips through anyway, we run a
- * small dedicated Claude call to translate it here, and log the step so it's
- * visible in the MCP log panel.
+ * small dedicated LLM call (via OpenRouter) to translate it here, and log the
+ * step so it's visible in the MCP log panel.
  */
 export async function translateCityNameToEnglish(original: string): Promise<string> {
-  const anthropic = getAnthropicClient();
-  const response = await anthropic.messages.create({
-    model: config.anthropicModel,
+  const openRouter = getOpenRouterClient();
+  const response = await openRouter.chat.completions.create({
+    model: config.openRouterModel,
     max_tokens: 64,
-    system:
-      'Ты переводчик названий городов и географических мест с русского на английский. ' +
-      'Ответь только правильным английским названием места, без пояснений и кавычек.',
-    messages: [{ role: 'user', content: original }],
+    messages: [
+      {
+        role: 'system',
+        content:
+          'Ты переводчик названий городов и географических мест с русского на английский. ' +
+          'Ответь только правильным английским названием места, без пояснений и кавычек.',
+      },
+      { role: 'user', content: original },
+    ],
   });
-  const textBlock = response.content.find((block) => block.type === 'text');
-  const translated = textBlock && textBlock.type === 'text' ? textBlock.text.trim() : original;
+  const translated = response.choices[0]?.message?.content?.trim();
 
   logBus.emitLog({
     server: 'trivago',
     serverLabel: 'Trivago (отели)',
     kind: 'translation',
-    title: 'Перевод названия города через Claude',
+    title: 'Перевод названия города через LLM (OpenRouter)',
     method: 'translate_city_name',
     payload: { original, translated },
   });

@@ -7,12 +7,13 @@ function envOrDefault(name: string, fallback: string): string {
 
 export const config = {
   port: Number(envOrDefault('PORT', '8787')),
-  anthropicApiKey: process.env.ANTHROPIC_API_KEY?.trim() || '',
-  anthropicModel: envOrDefault('ANTHROPIC_MODEL', 'claude-sonnet-5'),
+  openRouterApiKey: process.env.OPENROUTER_API_KEY?.trim() || '',
+  openRouterBaseUrl: envOrDefault('OPENROUTER_BASE_URL', 'https://openrouter.ai/api/v1'),
+  openRouterModel: envOrDefault('OPENROUTER_MODEL', 'openrouter/free'),
   kiwiMcpUrl: envOrDefault('KIWI_MCP_URL', 'https://mcp.kiwi.com'),
   trivagoMcpUrl: envOrDefault('TRIVAGO_MCP_URL', 'https://mcp.trivago.com/mcp'),
 };
 
-export function hasAnthropicKey(): boolean {
-  return config.anthropicApiKey.length > 0;
+export function hasOpenRouterKey(): boolean {
+  return config.openRouterApiKey.length > 0;
 }

@@ -1,4 +1,4 @@
-import type Anthropic from '@anthropic-ai/sdk';
+import type { ChatCompletionTool } from 'openai/resources/chat/completions';
 import { logBus } from '../logBus.js';
 import {
   kiwiClient,
@@ -20,7 +20,7 @@ export const KIWI_TOOL_NAME = 'kiwi_search_flight';
 export const TRIVAGO_SUGGEST_NAME = 'trivago_search_suggestions';
 export const TRIVAGO_SEARCH_NAME = 'trivago_accommodation_search';
 
-export async function buildAgentTools(): Promise<Anthropic.Tool[]> {
+export async function buildAgentTools(): Promise<ChatCompletionTool[]> {
   const [kiwiSchema, suggestSchema, searchSchema] = await Promise.all([
     getKiwiSearchFlightSchema(),
     getTrivagoSuggestionsSchema(),
@@ -29,27 +29,36 @@ export async function buildAgentTools(): Promise<Anthropic.Tool[]> {
 
   return [
     {
-      name: KIWI_TOOL_NAME,
-      description:
-        `${kiwiSchema.description ?? 'Поиск авиабилетов через Kiwi MCP.'} ` +
-        'ВАЖНО: Kiwi не поддерживает российские аэропорты — никогда не вызывай этот инструмент для рейсов ' +
-        'из/в Россию, вместо этого сразу сообщи пользователю, что Kiwi не поддерживает российские аэропорты.',
-      input_schema: kiwiSchema.inputSchema as Anthropic.Tool.InputSchema,
+      type: 'function',
+      function: {
+        name: KIWI_TOOL_NAME,
+        description:
+          `${kiwiSchema.description ?? 'Поиск авиабилетов через Kiwi MCP.'} ` +
+          'ВАЖНО: Kiwi не поддерживает российские аэропорты — никогда не вызывай этот инструмент для рейсов ' +
+          'из/в Россию, вместо этого сразу сообщи пользователю, что Kiwi не поддерживает российские аэропорты.',
+        parameters: kiwiSchema.inputSchema,
+      },
     },
     {
-      name: TRIVAGO_SUGGEST_NAME,
-      description:
-        `${suggestSchema.description ?? 'Поиск подсказок по месту для Trivago.'} ` +
-        'ВАЖНО: Trivago плохо ищет по-русски. Если пользователь назвал город по-русски, переведи ' +
-        'название на английский язык сам (правильное общепринятое название) и передавай в этот инструмент только английский вариант.',
-      input_schema: suggestSchema.inputSchema as Anthropic.Tool.InputSchema,
+      type: 'function',
+      function: {
+        name: TRIVAGO_SUGGEST_NAME,
+        description:
+          `${suggestSchema.description ?? 'Поиск подсказок по месту для Trivago.'} ` +
+          'ВАЖНО: Trivago плохо ищет по-русски. Если пользователь назвал город по-русски, переведи ' +
+          'название на английский язык сам (правильное общепринятое название) и передавай в этот инструмент только английский вариант.',
+        parameters: suggestSchema.inputSchema,
+      },
     },
     {
-      name: TRIVAGO_SEARCH_NAME,
-      description:
-        searchSchema.description ??
-        'Поиск отелей для места, найденного через trivago_search_suggestions. Используй id и ns из её ответа.',
-      input_schema: searchSchema.inputSchema as Anthropic.Tool.InputSchema,
+      type: 'function',
+      function: {
+        name: TRIVAGO_SEARCH_NAME,
+        description:
+          searchSchema.description ??
+          'Поиск отелей для места, найденного через trivago_search_suggestions. Используй id и ns из её ответа.',
+        parameters: searchSchema.inputSchema,
+      },
     },
   ];
 }

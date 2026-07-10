@@ -3,7 +3,7 @@ import cors from 'cors';
 import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { config, hasAnthropicKey } from './config.js';
+import { config, hasOpenRouterKey } from './config.js';
 import { attachWebSocketServer } from './ws.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, hasAnthropicKey: hasAnthropicKey() });
+  res.json({ ok: true, hasOpenRouterKey: hasOpenRouterKey() });
 });
 
 const clientDist = path.resolve(__dirname, '../../client/dist');
@@ -27,7 +27,7 @@ attachWebSocketServer(server);
 
 server.listen(config.port, () => {
   console.log(`trip-mcp server listening on http://localhost:${config.port}`);
-  if (!hasAnthropicKey()) {
-    console.warn('ANTHROPIC_API_KEY не задан — агент будет отвечать ошибкой, пока ключ не будет добавлен.');
+  if (!hasOpenRouterKey()) {
+    console.warn('OPENROUTER_API_KEY не задан — агент будет отвечать ошибкой, пока ключ не будет добавлен.');
   }
 });

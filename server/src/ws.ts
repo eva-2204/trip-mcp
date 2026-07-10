@@ -1,17 +1,17 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import type { Server } from 'node:http';
-import type Anthropic from '@anthropic-ai/sdk';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 import { logBus, McpLogEvent } from './logBus.js';
-import { runAgentTurn } from './agent/claude.js';
-import { hasAnthropicKey } from './config.js';
-import { MissingApiKeyError } from './agent/anthropicClient.js';
+import { runAgentTurn } from './agent/agent.js';
+import { hasOpenRouterKey } from './config.js';
+import { MissingApiKeyError } from './agent/openrouterClient.js';
 
 const WELCOME_TEXT =
   'Привет! Я ваш travel-агент ✈️ Помогу найти авиабилеты через Kiwi и отели через Trivago. ' +
   'Расскажите, куда и когда вы собираетесь — и я подберу варианты.';
 
 const NO_KEY_TEXT =
-  'Не задан ключ ANTHROPIC_API_KEY. Добавьте секретку с ключом Anthropic API — без него агент не сможет отвечать.';
+  'Не задан ключ OPENROUTER_API_KEY. Добавьте секретку с ключом OpenRouter API — без него агент не сможет отвечать.';
 
 type ServerMessage =
   | { type: 'welcome'; text: string }
@@ -36,11 +36,11 @@ export function attachWebSocketServer(server: Server): WebSocketServer {
   const wss = new WebSocketServer({ server, path: '/ws' });
 
   wss.on('connection', (ws) => {
-    const history: Anthropic.MessageParam[] = [];
+    const history: ChatCompletionMessageParam[] = [];
 
     send(ws, { type: 'welcome', text: WELCOME_TEXT });
     send(ws, { type: 'mcp_log_history', events: logBus.getHistory() });
-    if (!hasAnthropicKey()) {
+    if (!hasOpenRouterKey()) {
       send(ws, { type: 'error', text: NO_KEY_TEXT });
     }
 
@@ -60,7 +60,7 @@ export function attachWebSocketServer(server: Server): WebSocketServer {
         return;
       }
 
-      if (!hasAnthropicKey()) {
+      if (!hasOpenRouterKey()) {
         send(ws, { type: 'error', text: NO_KEY_TEXT });
         return;
       }
