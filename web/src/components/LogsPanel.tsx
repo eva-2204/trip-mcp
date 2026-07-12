@@ -13,7 +13,7 @@ export default function LogsPanel({ steps }: { steps: LogStep[] }) {
   return (
     <div className="panel-logs">
       <div className="panel-header">
-        📡 Журнал MCP-вызовов
+        Журнал MCP-вызовов
         <span className="count-badge">{steps.length}</span>
       </div>
       <div className="pipeline-hint">

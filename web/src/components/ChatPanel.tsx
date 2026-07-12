@@ -26,7 +26,7 @@ export default function ChatPanel({ messages, disabled, onSend }: Props) {
 
   return (
     <div className="panel-chat">
-      <div className="panel-header">💬 Чат с AI-агентом</div>
+      <div className="panel-header">Чат с AI-агентом</div>
       <div className="chat-messages scrollbar-thin" ref={listRef}>
         {messages.map((m) => (
           <MessageBubble key={m.id} message={m} />

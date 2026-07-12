@@ -1,6 +1,7 @@
 import { McpHttpClient, extractTextContent } from "./mcpHttpClient.js";
 import { logBus, type McpCallDetails } from "../logging/logBus.js";
 import { enrichTrivagoPricesWithRub } from "../agent/rubEnrich.js";
+import { localizeTrivagoResult } from "../agent/trivagoLocalize.js";
 
 export const TRIVAGO_SERVER_NAME = "Trivago MCP";
 
@@ -205,7 +206,7 @@ export class TrivagoMcpClient {
     }
 
     const text = extractTextContent(result.result) ?? JSON.stringify(result.result);
-    return { ok: true, text: enrichTrivagoPricesWithRub(text) };
+    return { ok: true, text: localizeTrivagoResult(enrichTrivagoPricesWithRub(text)) };
   }
 }
 

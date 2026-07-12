@@ -1,13 +1,15 @@
 import type { LogStep } from "../types";
 import JsonViewer from "./JsonViewer";
 
+// Plain-text Unicode symbols (not color-emoji codepoints) so these render
+// consistently even without an emoji font installed.
 const KIND_ICON: Record<LogStep["type"], string> = {
-  user_message: "🧑",
-  llm_request: "🤖",
-  llm_response: "🤖",
-  mcp_call: "🔌",
-  final_answer: "✅",
-  error: "⚠️",
+  user_message: "•",
+  llm_request: "◆",
+  llm_response: "◆",
+  mcp_call: "⇄",
+  final_answer: "✓",
+  error: "✕",
 };
 
 const STATUS_LABEL: Record<LogStep["status"], string> = {
