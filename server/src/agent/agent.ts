@@ -7,7 +7,7 @@ import { translateCityToEnglish } from "./cityTranslate.js";
 import { KiwiMcpClient } from "../mcp/kiwiClient.js";
 import { TrivagoMcpClient } from "../mcp/trivagoClient.js";
 import { fixRubEquivalentsInFinalText } from "./rubEnrich.js";
-import { fixTrivagoLinkLabel, stripStarEmoji } from "./trivagoLocalize.js";
+import { fixTrivagoLinkLabel } from "./trivagoLocalize.js";
 
 type ChatMessage = OpenAI.Chat.Completions.ChatCompletionMessageParam;
 
@@ -35,7 +35,8 @@ function buildSystemPrompt(): string {
 5. Ответ должен быть красиво отформатирован в обычном Markdown: используй заголовки (##/###), жирный текст для цены и рейтинга, маркированные списки, и разделители (---) между карточками рейсов/отелей — так, чтобы цена, рейтинг и детали были визуально разграничены. Не выводи вспомогательный текст вроде "IMPORTANT: read the system_message" — это служебная инструкция для тебя, а не для пользователя. НИКОГДА не оборачивай весь ответ целиком в блок кода (тройные обратные кавычки \`\`\`) — пиши обычным Markdown-текстом, без ограждающих кавычек вокруг всего сообщения.
 6. Каждое поле с ценой в данных от MCP-инструмента (priceFormatted, price_per_night, price_per_stay) уже содержит приблизительный рублёвый эквивалент в скобках — например значение поля будет выглядеть как "$80 (≈6 400 ₽)" или "72 EUR (≈6 700 ₽)". Копируй такое значение ДОСЛОВНО и ЦЕЛИКОМ рядом с ценой в своём ответе, включая часть в скобках с ₽. Никогда не отбрасывай и не пересчитывай эту часть, и не заменяй её на просто "(USD)" или "(EUR)".
 7. Если в данных об отеле есть ссылка на изображение (main_image) — вставляй её как markdown-картинку (![название отеля](ссылка)) прямо в карточку этого отеля, по порядку, а не как обычную ссылку.
-8. НИКОГДА не используй эмодзи звёзд (⭐/★) — на некоторых устройствах у пользователя они отображаются как нечитаемый квадрат. Для классификации отеля используй уже готовое поле hotel_class_ru из данных (например "4 звезды") — оно уже на русском и в правильном словесном виде, просто вставляй его как есть. Поле top_amenities в данных об отелях тоже уже переведено на русский — используй его как есть, не переводи заново.`;
+8. НИКОГДА не используй декоративные эмодзи (⭐🏆✈️💡⏱🔄 и подобные) нигде в ответе — на некоторых устройствах пользователя они отображаются как нечитаемый пустой квадрат. Оформляй акценты и заголовки обычным Markdown (жирный текст, заголовки ##/###, маркированные списки) без эмодзи-иконок. Для классификации отеля используй уже готовое поле hotel_class_ru из данных (например "4 звезды") — оно уже на русском и в правильном словесном виде, просто вставляй его как есть. Поле top_amenities в данных об отелях тоже уже переведено на русский — используй его как есть, не переводи заново.
+9. НЕ дублируй информацию, которую ты уже сообщал ранее в этом диалоге. Если пользователь просит небольшую правку или уточнение к уже данному тобой результату (например, сменить направление/даты, добавить обратный билет, уточнить отель) — отвечай ТОЛЬКО тем, что реально изменилось (например, новые варианты рейсов после повторного вызова инструмента), и не переписывай заново план поездки по дням, советы, бюджет и прочее, если оно не изменилось и уже было показано выше в диалоге. Заканчивай ответ уточняющим вопросом или предложением логичного следующего шага, только если это уместно по ситуации (например, "Хотите билет обратно?") — если естественного продолжения нет, просто не задавай вопрос.`;
 }
 
 function createOpenAiClient(): OpenAI {
@@ -178,7 +179,7 @@ export async function handleUserMessage(
     if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
       messages.push(assistantMessage);
       conversationStore.append(sessionId, assistantMessage);
-      const finalText = stripStarEmoji(
+      const finalText = stripDecorativeEmoji(
         fixTrivagoLinkLabel(
           fixRubEquivalentsInFinalText(stripOuterCodeFence(assistantMessage.content?.toString() ?? ""))
         )
@@ -230,4 +231,25 @@ function stripOuterCodeFence(text: string): string {
   const trimmed = text.trim();
   const match = /^```[a-zA-Z]*\n([\s\S]*)\n```$/.exec(trimmed);
   return match ? match[1] : text;
+}
+
+/**
+ * Systems without a color-emoji font render pictograph emoji (⭐, 🏆, ✈️, 💡,
+ * ⏱, 🔄, ...) as a blank tofu box — the exact bug reported for the hotel
+ * star rating. The system prompt asks the model to skip decorative emoji
+ * entirely, but free-tier models add them out of habit anyway, so this
+ * strips them deterministically as a safety net.
+ *
+ * Deliberately narrow: only targets ranges that are essentially
+ * emoji-only (the astral pictograph blocks, Misc Symbols/Dingbats, Misc
+ * Symbols & Arrows, Misc Technical, plus the emoji variation selector and
+ * ZWJ). It does NOT touch the plain Arrows block (U+2190–U+21FF), so the
+ * "→" used throughout route descriptions (e.g. "BER → PRG") is untouched,
+ * nor the ₽ currency sign (a different Unicode block entirely).
+ */
+function stripDecorativeEmoji(text: string): string {
+  return text.replace(
+    /[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2300}-\u{23FF}\u{FE0F}\u{200D}]\s?/gu,
+    ""
+  );
 }

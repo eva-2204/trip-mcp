@@ -166,14 +166,3 @@ export function localizeTrivagoResult(text: string): string {
 export function fixTrivagoLinkLabel(text: string): string {
   return text.replace(/\[\s*View\s+on\s+trivago\s*(→)?\s*\]/gi, "[Смотреть на trivago →]");
 }
-
-/**
- * Defensive cleanup: hotel_class_ru already spells out the rating in Russian
- * words, so a leftover ⭐/★ emoji next to it is redundant at best — and on
- * systems without a color-emoji font (like the one that reported this), ⭐
- * renders as a blank tofu box. Strip any that slip through despite the
- * system prompt.
- */
-export function stripStarEmoji(text: string): string {
-  return text.replace(/[⭐★]\s*/g, "");
-}
