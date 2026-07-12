@@ -1,3 +1,5 @@
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "../types";
 
 export default function MessageBubble({ message }: { message: ChatMessage }) {
@@ -13,6 +15,10 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
               <span />
             </span>
           </>
+        ) : message.role === "assistant" ? (
+          <div className="markdown-content">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+          </div>
         ) : (
           message.text
         )}

@@ -65,4 +65,14 @@ npm run dev:web       # :5173, Vite dev server (проксирует /api на :
 ## Переменные окружения
 
 См. `.env.example`: `OPENROUTER_API_KEY` (обязателен), `PORT`, `KIWI_MCP_URL`,
-`TRIVAGO_MCP_URL`, `OPENROUTER_BASE_URL`, `OPENROUTER_MODEL`.
+`TRIVAGO_MCP_URL`, `OPENROUTER_BASE_URL`, `OPENROUTER_MODEL`, `USD_RUB_RATE`,
+`EUR_RUB_RATE`.
+
+## Рублёвый эквивалент цены
+
+Рядом с каждой ценой из Kiwi/Trivago бэкенд детерминированно (без участия LLM)
+добавляет приблизительный рублёвый эквивалент в скобках, например `72 EUR (≈6 700 ₽)`
+(`server/src/agent/rubEnrich.ts`). Курс — статический, задаётся переменными
+`USD_RUB_RATE` / `EUR_RUB_RATE` (по умолчанию 80 и 93): живой источник курса
+валют недоступен из окружения разработки этого демо, поэтому курс не
+подтягивается автоматически и его стоит обновлять вручную при необходимости.

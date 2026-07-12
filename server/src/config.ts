@@ -11,6 +11,14 @@ export const config = {
   trivago: {
     url: process.env.TRIVAGO_MCP_URL ?? "https://mcp.trivago.com/mcp",
   },
+  // Approximate, manually-maintained FX rates used only to show a rough RUB
+  // equivalent next to prices returned by Kiwi/Trivago. There is no live FX
+  // MCP or REST source in scope for this demo, so these are static and
+  // overridable via env vars rather than fetched at request time.
+  currency: {
+    usdToRub: Number(process.env.USD_RUB_RATE ?? 80),
+    eurToRub: Number(process.env.EUR_RUB_RATE ?? 93),
+  },
 };
 
 export function isOpenRouterConfigured(): boolean {

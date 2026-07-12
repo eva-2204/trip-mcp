@@ -1,6 +1,7 @@
 import { McpHttpClient, extractTextContent } from "./mcpHttpClient.js";
 import { isRussianAirport } from "./russianAirports.js";
 import { logBus, type McpCallDetails } from "../logging/logBus.js";
+import { enrichKiwiPricesWithRub } from "../agent/rubEnrich.js";
 
 export const KIWI_SERVER_NAME = "Kiwi MCP";
 
@@ -111,6 +112,6 @@ export class KiwiMcpClient {
     }
 
     const text = extractTextContent(result.result) ?? JSON.stringify(result.result);
-    return { ok: true, text };
+    return { ok: true, text: enrichKiwiPricesWithRub(text) };
   }
 }

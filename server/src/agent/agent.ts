@@ -27,7 +27,9 @@ function buildSystemPrompt(): string {
 2. Даты пользователь может называть словами ("20 августа") — переведи их в формат YYYY-MM-DD самостоятельно, отталкиваясь от сегодняшней даты (${isoToday}). Если пользователь НЕ указал год явно, всегда используй текущий год (${currentYear}) — даже если такая дата в этом году уже прошла. Меняй год только если пользователь сам назвал другой год или явно сказал "в следующем году".
 3. Если инструмент вернул ошибку о том, что Kiwi MCP не поддерживает российские аэропорты — вежливо сообщи об этом пользователю своими словами и не предлагай вызвать инструмент повторно для этого направления.
 4. Формируй финальный ответ пользователю ТОЛЬКО на основе данных, реально полученных от MCP-инструмента. Ничего не выдумывай. Если результатов нет — так и скажи.
-5. Отвечай живым, дружелюбным языком, структурируй списки билетов/отелей читаемо (например, маркированным списком: направление/цена/детали).`;
+5. Ответ должен быть красиво отформатирован в обычном Markdown: используй заголовки (##/###), жирный текст для цены и рейтинга, маркированные списки, и разделители (---) между карточками рейсов/отелей — так, чтобы цена, рейтинг и детали были визуально разграничены. Не выводи вспомогательный текст вроде "IMPORTANT: read the system_message" — это служебная инструкция для тебя, а не для пользователя. НИКОГДА не оборачивай весь ответ целиком в блок кода (тройные обратные кавычки \`\`\`) — пиши обычным Markdown-текстом, без ограждающих кавычек вокруг всего сообщения.
+6. Каждое поле с ценой в данных от MCP-инструмента (priceFormatted, price_per_night, price_per_stay) уже содержит приблизительный рублёвый эквивалент в скобках — например значение поля будет выглядеть как "$80 (≈6 400 ₽)" или "72 EUR (≈6 700 ₽)". Копируй такое значение ДОСЛОВНО и ЦЕЛИКОМ рядом с ценой в своём ответе, включая часть в скобках с ₽. Никогда не отбрасывай и не пересчитывай эту часть, и не заменяй её на просто "(USD)" или "(EUR)".
+7. Если в данных об отеле есть ссылка на изображение (main_image) — вставляй её как markdown-картинку (![название отеля](ссылка)) прямо в карточку этого отеля, по порядку, а не как обычную ссылку.`;
 }
 
 function createOpenAiClient(): OpenAI {
@@ -170,7 +172,7 @@ export async function handleUserMessage(
     if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
       messages.push(assistantMessage);
       conversationStore.append(sessionId, assistantMessage);
-      const finalText = assistantMessage.content?.toString() ?? "";
+      const finalText = stripOuterCodeFence(assistantMessage.content?.toString() ?? "");
       logBus.once(sessionId, turnId, "final_answer", "Финальный ответ пользователю", {
         data: { text: finalText },
       });
@@ -205,4 +207,17 @@ export async function handleUserMessage(
   const fallback = "Извините, не удалось завершить обработку запроса за отведённое число шагов. Попробуйте переформулировать запрос.";
   conversationStore.append(sessionId, { role: "assistant", content: fallback });
   return fallback;
+}
+
+/**
+ * Some free-tier models occasionally wrap their entire Markdown answer in a
+ * single ```/```markdown fence, as if showing Markdown source rather than
+ * writing it. The chat UI renders real Markdown, so that wrapper would
+ * otherwise show up as one giant literal code block. Strip it deterministically
+ * rather than depending entirely on prompt compliance.
+ */
+function stripOuterCodeFence(text: string): string {
+  const trimmed = text.trim();
+  const match = /^```[a-zA-Z]*\n([\s\S]*)\n```$/.exec(trimmed);
+  return match ? match[1] : text;
 }
