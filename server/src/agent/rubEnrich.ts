@@ -108,3 +108,39 @@ export function enrichTrivagoPricesWithRub(text: string): string {
   outerObj.output = JSON.stringify(list);
   return preamble + JSON.stringify(outerObj, null, 2);
 }
+
+const SYMBOL_TO_CURRENCY: Record<string, string> = { $: "USD", "€": "EUR" };
+
+/**
+ * Even with the source data already carrying the correct RUB figure and an
+ * explicit prompt instruction to copy it verbatim, an LLM can occasionally
+ * mistype a multi-digit number while composing prose. Rather than trust that
+ * transcription, this recomputes the ruble amount directly from whatever
+ * currency amount actually appears in the model's final answer — so the
+ * number shown to the user is always mathematically exact for that amount,
+ * regardless of what the model wrote for the ruble part (or whether it wrote
+ * one at all).
+ */
+export function fixRubEquivalentsInFinalText(text: string): string {
+  let result = text.replace(
+    /([$€])\s?(\d[\d.,]*)(\s*\(≈[^)]*\))?/g,
+    (match, symbol: string, amountRaw: string) => {
+      const rate = rateForCurrency(SYMBOL_TO_CURRENCY[symbol]);
+      const amount = extractAmount(amountRaw);
+      if (!rate || amount == null) return match;
+      return `${symbol}${amountRaw} (≈${formatRub(amount * rate)})`;
+    }
+  );
+
+  result = result.replace(
+    /(\d[\d.,]*)\s*(USD|EUR)\b(\s*\(≈[^)]*\))?/g,
+    (match, amountRaw: string, code: string) => {
+      const rate = rateForCurrency(code);
+      const amount = extractAmount(amountRaw);
+      if (!rate || amount == null) return match;
+      return `${amountRaw} ${code} (≈${formatRub(amount * rate)})`;
+    }
+  );
+
+  return result;
+}
