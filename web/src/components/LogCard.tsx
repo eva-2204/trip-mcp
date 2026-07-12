@@ -1,15 +1,16 @@
 import type { LogStep } from "../types";
 import JsonViewer from "./JsonViewer";
+import { EmojiIcon } from "../emoji";
 
-// Plain-text Unicode symbols (not color-emoji codepoints) so these render
-// consistently even without an emoji font installed.
-const KIND_ICON: Record<LogStep["type"], string> = {
-  user_message: "•",
-  llm_request: "◆",
-  llm_response: "◆",
-  mcp_call: "⇄",
-  final_answer: "✓",
-  error: "✕",
+// Self-hosted Twemoji SVGs (web/public/emoji) — render identically everywhere,
+// unlike relying on the visitor's OS to have a color-emoji font installed.
+const KIND_ICON: Record<LogStep["type"], { file: string; alt: string }> = {
+  user_message: { file: "1f9d1", alt: "пользователь" },
+  llm_request: { file: "1f916", alt: "LLM" },
+  llm_response: { file: "1f916", alt: "LLM" },
+  mcp_call: { file: "1f50c", alt: "MCP" },
+  final_answer: { file: "2705", alt: "готово" },
+  error: { file: "26a0", alt: "ошибка" },
 };
 
 const STATUS_LABEL: Record<LogStep["status"], string> = {
@@ -24,7 +25,7 @@ export default function LogCard({ step }: { step: LogStep }) {
   return (
     <div className={`log-card status-${step.status}`}>
       <div className="log-card-head">
-        <span className="log-kind-icon">{KIND_ICON[step.type]}</span>
+        <EmojiIcon file={KIND_ICON[step.type].file} alt={KIND_ICON[step.type].alt} className="log-kind-icon" />
         <span className="log-card-title">{step.title}</span>
         {step.status === "pending" && <span className="spinner" aria-hidden />}
         <span className={`log-badge ${step.status}`}>{STATUS_LABEL[step.status]}</span>

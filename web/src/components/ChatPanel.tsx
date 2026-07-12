@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChatMessage } from "../types";
 import MessageBubble from "./MessageBubble";
+import { EmojiIcon } from "../emoji";
 
 interface Props {
   messages: ChatMessage[];
@@ -26,7 +27,10 @@ export default function ChatPanel({ messages, disabled, onSend }: Props) {
 
   return (
     <div className="panel-chat">
-      <div className="panel-header">Чат с AI-агентом</div>
+      <div className="panel-header">
+        <EmojiIcon file="1f4ac" alt="" />
+        Чат с AI-агентом
+      </div>
       <div className="chat-messages scrollbar-thin" ref={listRef}>
         {messages.map((m) => (
           <MessageBubble key={m.id} message={m} />

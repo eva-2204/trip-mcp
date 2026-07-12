@@ -308,6 +308,19 @@ body {
   border: 1px solid var(--border);
 }
 
+/* Self-hosted Twemoji SVGs (see web/public/emoji) render inline like a
+   normal glyph, unlike the full-width hotel photos matched above. */
+.markdown-content img[src^="/emoji/"] {
+  display: inline;
+  width: 1.1em;
+  height: 1.1em;
+  vertical-align: -0.15em;
+  margin: 0 0.06em 0 0;
+  border-radius: 0;
+  box-shadow: none;
+  border: none;
+}
+
 .markdown-content code {
   background: var(--accent-100);
   border-radius: 4px;
@@ -503,6 +516,21 @@ body {
 .log-kind-icon {
   font-size: 15px;
   line-height: 1;
+}
+
+.emoji-icon {
+  display: inline-block;
+  width: 15px;
+  height: 15px;
+  vertical-align: -2px;
+  flex-shrink: 0;
+}
+
+.panel-header .emoji-icon {
+  width: 16px;
+  height: 16px;
+  vertical-align: -3px;
+  margin-right: 2px;
 }
 
 .log-card-title {

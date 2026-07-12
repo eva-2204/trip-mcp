@@ -1,6 +1,7 @@
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "../types";
+import { insertEmojiImages } from "../emoji";
 
 export default function MessageBubble({ message }: { message: ChatMessage }) {
   return (
@@ -17,7 +18,7 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
           </>
         ) : message.role === "assistant" ? (
           <div className="markdown-content">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.text}</ReactMarkdown>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{insertEmojiImages(message.text)}</ReactMarkdown>
           </div>
         ) : (
           message.text

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { LogStep } from "../types";
 import LogCard from "./LogCard";
+import { EmojiIcon } from "../emoji";
 
 export default function LogsPanel({ steps }: { steps: LogStep[] }) {
   const listRef = useRef<HTMLDivElement>(null);
@@ -13,6 +14,7 @@ export default function LogsPanel({ steps }: { steps: LogStep[] }) {
   return (
     <div className="panel-logs">
       <div className="panel-header">
+        <EmojiIcon file="1f4e1" alt="" />
         Журнал MCP-вызовов
         <span className="count-badge">{steps.length}</span>
       </div>
