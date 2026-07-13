@@ -15,7 +15,11 @@ export interface FlightSearchArgs {
   infants?: number;
   cabinClass?: "M" | "W" | "C" | "F";
   currency?: string;
+  /** How many itineraries to show the user (not sent to Kiwi — applied client-side after the call). */
+  maxResults?: number;
 }
+
+export const DEFAULT_MAX_FLIGHT_RESULTS = 5;
 
 export interface FlightSearchOutcome {
   blocked?: { reason: string };
@@ -59,8 +63,9 @@ export class KiwiMcpClient {
       }
     }
 
-    const normalizedArgs: FlightSearchArgs = {
-      ...args,
+    const { maxResults, ...restArgs } = args;
+    const normalizedArgs: Omit<FlightSearchArgs, "maxResults"> = {
+      ...restArgs,
       departureDate: toKiwiDate(args.departureDate),
       returnDate: args.returnDate ? toKiwiDate(args.returnDate) : undefined,
     };
@@ -112,6 +117,6 @@ export class KiwiMcpClient {
     }
 
     const text = extractTextContent(result.result) ?? JSON.stringify(result.result);
-    return { ok: true, text: enrichKiwiPricesWithRub(text) };
+    return { ok: true, text: enrichKiwiPricesWithRub(text, maxResults ?? DEFAULT_MAX_FLIGHT_RESULTS) };
   }
 }

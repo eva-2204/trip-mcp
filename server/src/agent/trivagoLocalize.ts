@@ -111,7 +111,11 @@ const RUSSIAN_CARD_TEMPLATE = `Ты — полезный туристическ�
 После перечисления ВСЕХ отелей добавь краткое резюме, тоже полностью на русском:
 1. **Итог** — что нашлось (например: «Нашёл 8 отелей в центре Берлина на ваши даты, от 65 до 210 евро за ночь»).
 2. **Особенности** — 2-3 лучших варианта и почему (лучшая цена, самый высокий рейтинг, лучшее расположение, уникальные удобства).
-3. **Советы** — если уместно, предложи фильтры или изменения поиска.`;
+3. **Советы** — если уместно, предложи фильтры или изменения поиска.
+
+Поля total_found и shown_count в данных показывают, сколько отелей найдено всего и сколько показано в этом ответе. Если shown_count меньше total_found — обязательно упомяни в конце, что показаны не все варианты, и предложи показать больше по запросу (например: «Показаны 8 из 26 найденных отелей — могу показать больше, если нужно»).`;
+
+export const DEFAULT_MAX_HOTEL_RESULTS = 8;
 
 interface TrivagoAccommodation {
   hotel_rating?: number;
@@ -119,7 +123,7 @@ interface TrivagoAccommodation {
   hotel_class_ru?: string;
 }
 
-export function localizeTrivagoResult(text: string): string {
+export function localizeTrivagoResult(text: string, maxResults: number = DEFAULT_MAX_HOTEL_RESULTS): string {
   const braceIndex = text.indexOf("{");
   if (braceIndex < 0) return text;
 
@@ -131,7 +135,12 @@ export function localizeTrivagoResult(text: string): string {
     return text;
   }
 
-  const outerObj = outer as { output?: string; system_message?: string };
+  const outerObj = outer as {
+    output?: string;
+    system_message?: string;
+    total_found?: number;
+    shown_count?: number;
+  };
   if (typeof outerObj.output !== "string") return text;
 
   let list: TrivagoAccommodation[];
@@ -141,6 +150,12 @@ export function localizeTrivagoResult(text: string): string {
     return text;
   }
   if (!Array.isArray(list)) return text;
+
+  outerObj.total_found = list.length;
+  if (maxResults > 0 && list.length > maxResults) {
+    list = list.slice(0, maxResults);
+  }
+  outerObj.shown_count = list.length;
 
   for (const item of list) {
     if (typeof item.top_amenities === "string") {

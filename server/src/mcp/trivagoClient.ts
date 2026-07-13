@@ -12,6 +12,8 @@ export interface HotelSearchArgs {
   departure: string; // YYYY-MM-DD
   adults?: number;
   rooms?: number;
+  /** How many hotels to show the user (not sent to Trivago — applied client-side after the call). */
+  maxResults?: number;
 }
 
 export interface HotelSearchOutcome {
@@ -145,7 +147,7 @@ export class TrivagoMcpClient {
       rooms: args.rooms ?? 1,
     };
 
-    return this.callAccommodationSearch(sessionId, turnId, searchParams);
+    return this.callAccommodationSearch(sessionId, turnId, searchParams, args.maxResults);
   }
 
   /** Fallback flow matching the live server's current tool signature (query-based, no id/ns). */
@@ -161,13 +163,14 @@ export class TrivagoMcpClient {
       adults: args.adults ?? 1,
       rooms: args.rooms ?? 1,
     };
-    return this.callAccommodationSearch(sessionId, turnId, searchParams);
+    return this.callAccommodationSearch(sessionId, turnId, searchParams, args.maxResults);
   }
 
   private async callAccommodationSearch(
     sessionId: string,
     turnId: string,
-    params: Record<string, unknown>
+    params: Record<string, unknown>,
+    maxResults?: number
   ): Promise<HotelSearchOutcome> {
     const step = logBus.start(sessionId, turnId, "mcp_call", `Trivago MCP → trivago-accommodation-search`, {
       mcp: {
@@ -206,7 +209,7 @@ export class TrivagoMcpClient {
     }
 
     const text = extractTextContent(result.result) ?? JSON.stringify(result.result);
-    return { ok: true, text: localizeTrivagoResult(enrichTrivagoPricesWithRub(text)) };
+    return { ok: true, text: localizeTrivagoResult(enrichTrivagoPricesWithRub(text), maxResults) };
   }
 }
 

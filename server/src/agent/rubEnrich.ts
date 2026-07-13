@@ -39,8 +39,13 @@ function withRubSuffix(priceText: string, rate: number): string {
   return `${priceText} (≈${formatRub(amount * rate)})`;
 }
 
-/** Kiwi search-flight result: top-level `currency`, `itineraries[].priceFormatted`. */
-export function enrichKiwiPricesWithRub(text: string): string {
+/**
+ * Kiwi search-flight result: top-level `currency`, `itineraries[].priceFormatted`.
+ * Also truncates `itineraries` to `maxResults` (Kiwi's own ordering — cheapest
+ * first, per observed responses) and records `totalFound`/`shownCount` so the
+ * agent can tell the user more results exist without having to count itself.
+ */
+export function enrichKiwiPricesWithRub(text: string, maxResults?: number): string {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -48,13 +53,26 @@ export function enrichKiwiPricesWithRub(text: string): string {
     return text;
   }
 
-  const data = parsed as { currency?: string; itineraries?: Array<{ priceFormatted?: string }> };
-  const rate = rateForCurrency(data.currency);
-  if (!rate || !Array.isArray(data.itineraries)) return text;
+  const data = parsed as {
+    currency?: string;
+    itineraries?: Array<{ priceFormatted?: string }>;
+    totalFound?: number;
+    shownCount?: number;
+  };
+  if (!Array.isArray(data.itineraries)) return text;
 
-  for (const itinerary of data.itineraries) {
-    if (typeof itinerary.priceFormatted === "string") {
-      itinerary.priceFormatted = withRubSuffix(itinerary.priceFormatted, rate);
+  data.totalFound = data.itineraries.length;
+  if (typeof maxResults === "number" && maxResults > 0 && data.itineraries.length > maxResults) {
+    data.itineraries = data.itineraries.slice(0, maxResults);
+  }
+  data.shownCount = data.itineraries.length;
+
+  const rate = rateForCurrency(data.currency);
+  if (rate) {
+    for (const itinerary of data.itineraries) {
+      if (typeof itinerary.priceFormatted === "string") {
+        itinerary.priceFormatted = withRubSuffix(itinerary.priceFormatted, rate);
+      }
     }
   }
 
